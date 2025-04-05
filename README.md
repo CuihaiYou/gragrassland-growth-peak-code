@@ -1,7 +1,7 @@
 # Grassland Growth Peak Code
 
 ## Overview
-This repository contains the data analysis code used in the article **"Decadal drought disrupts global increase in grassland growth peaks"**.  
+This repository contains the data analysis code used in the article **"Decadal trends in global grassland growth peaks and their drivers since the 1980s"**.  
 
 The scripts cover the following analyses:  
 - **Partial correlation analysis** to examine relationships between key environmental variables.  
