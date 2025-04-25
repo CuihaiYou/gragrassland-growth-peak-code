@@ -225,3 +225,145 @@ for (year in years) {
 }
 
 print("Analysis complete! All results saved.")
+
+
+
+#####################################
+#calculate the difference between RF_ALL and RF result that excluded the effects of individual factors
+#calculations of climate as an example, we can do the calculations of the other variables as the same code.
+
+# set the times intervals
+years <- 1982:2021
+
+# set input and output file
+all_folder <- "/home/you_ch/RF/factor experiment/RF_result/RF_ALL/"
+cli_folder <- "/home/you_ch/RF/factor experiment/RF_result/RF_CLI/"
+output_folder <- "/home/you_ch/RF/factor experiment/RF_result/RF_DIFF_CLI/"  # 结果输出目录
+
+# ensure the output file exsit
+if (!dir.exists(output_folder)) {
+  dir.create(output_folder, recursive = TRUE)
+}
+
+# go through all the years
+for (year in years) {
+  # set file pathways
+  all_file <- paste0(all_folder, "RF_ALL_", year, ".tif")
+  cli_file <- paste0(cli_folder, "RF_CLI_", year, ".tif")
+  output_file <- paste0(output_folder, "RF_DIFF_CLI_", year, ".tif")
+  
+  # check if the file exist
+  if (file.exists(all_file) & file.exists(cli_file)) {
+    # read raster
+    rf_all <- raster(all_file)
+    rf_cli <- raster(cli_file)
+    
+    # cal the difference
+    rf_diff <- rf_all - rf_cli
+    
+    # save the results
+    writeRaster(rf_diff, filename = output_file, format = "GTiff", NAflag = -9999, overwrite = TRUE)
+    
+    print(paste("Year", year, "difference saved"))
+  } else {
+    print(paste("Skipping year", year, "due to missing files"))
+  }
+}
+
+
+
+#########################################
+## calculate the sensitivities of climate variables
+### we can use the same methods to calculate the sensitivities of other variables
+# set pathways
+ndvi_path <- "/home/you_ch/RF/factor experiment/RF_result/RF_DIFF_CLI"
+
+# read NDVI file
+ndvi_files <- list.files(ndvi_path, pattern = "RF_DIFF_CLI_.*\\.tif$", full.names = TRUE)
+cat("reading NDVI file...\n")
+ndvi_stack <- stack(ndvi_files)
+n_years <- nlayers(ndvi_stack)
+ndvi_array <- as.array(ndvi_stack)
+
+# read the climate variables
+read_variable_files <- function(path, pattern) {
+  files <- list.files(path, pattern = pattern, full.names = TRUE)
+  cat("reading files: \n")
+  for (file in files) {
+    print(paste("reading file:", file))
+  }
+  stack <- stack(files)
+  return(as.array(stack))
+}
+precipitation_path <- "/home/you_ch/ERA5/PPT/grass_diff"
+temperature_path <- "/home/you_ch/ERA5/TA/grass_diff"
+radiation_path <- "/home/you_ch/ERA5/Rad/grass_diff"
+precipitation_array <- read_variable_files(precipitation_path, "PPT_DIFF_.*\\.tiff$")
+temperature_array <- read_variable_files(temperature_path, "TA_DIFF_.*\\.tiff$")
+radiation_array <- read_variable_files(radiation_path, "Rad_DIFF_.*\\.tiff$")
+
+# create raster to restore the sensitivity
+ta_sensitivity_raster <- raster(ndvi_stack[[1]])
+ppt_sensitivity_raster <- raster(ndvi_stack[[1]])
+rad_sensitivity_raster <- raster(ndvi_stack[[1]])
+
+# set a value to exclude the nonsense variables
+threshold <- 1e-4
+
+# cycle every pixels
+for (i in 1:dim(ndvi_array)[1]) {
+  for (j in 1:dim(ndvi_array)[2]) {
+
+    ndvi_values <- ndvi_array[i, j, ]
+    
+    if (all(is.na(ndvi_values)) || all(ndvi_values == 0) || length(unique(ndvi_values)) == 1) next
+    
+    ta_values <- temperature_array[i, j, ]
+    rad_values <- radiation_array[i, j, ]
+    ppt_values <- precipitation_array[i, j, ]
+    years <- 1982:2021
+    var_values <- data.frame(
+      TA = ta_values,
+      Rad = rad_values,
+      PPT = ppt_values
+    )
+    
+    
+    # delete the NAs
+    cordata <- data.frame(NDVImax = ndvi_values, var_values)
+    cordata <- cordata[complete.cases(cordata), ]
+    # if there are enough data, run the next
+    if (nrow(cordata) >= 20 ) {
+      # formula for x and y
+      mdndvi <- lm(NDVImax ~ TA+PPT+Rad-1, data = cordata)
+      # refresh the results
+      ta_sensitivity_raster[i, j] <-coef(mdndvi)["TA"] 
+      ppt_sensitivity_raster[i, j]<-coef(mdndvi)["PPT"]
+      rad_sensitivity_raster[i, j] <- coef(mdndvi)["Rad"]
+      ## print the results
+      cat(paste("i:", i, "j:", j, 
+                "dim1:", dim(ndvi_array)[1], "dim2:", dim(ndvi_array)[2], 
+                "PPT:", ifelse(is.na(coef(mdndvi)["PPT"]), "NA", coef(mdndvi)["PPT"]), 
+                "TA:", ifelse(is.na(coef(mdndvi)["TA"]), "NA", coef(mdndvi)["TA"]), 
+                "Rad:", ifelse(is.na(coef(mdndvi)["Rad"]), "NA", coef(mdndvi)["Rad"])), "\n")
+      p_ta_sensitivity_raster[i, j]<-summary(mdndvi)$coefficients["TA", 4] 
+      p_ppt_sensitivity_raster[i, j] <-summary(mdndvi)$coefficients["PPT", 4]
+      
+      p_rad_sensitivity_raster[i, j]<-summary(mdndvi)$coefficients["Rad", 4]
+      
+      
+    }
+  }
+}
+
+
+# save the results
+writeRaster(ta_sensitivity_raster, filename = "/home/you_ch/RF/factor experiment/sensitivity/ta_sensitivity_no_inter_1_414_raster.tif", format = "GTiff",overwrite=TRUE)
+writeRaster(ppt_sensitivity_raster, filename = "/home/you_ch/RF/factor experiment/sensitivity/ppt_sensitivity_no_inter_1_414_raster.tif", format = "GTiff",overwrite=TRUE)
+writeRaster(rad_sensitivity_raster, filename = "/home/you_ch/RF/factor experiment/sensitivity/rad_sensitivity_no_inter_1_414_raster.tif", format = "GTiff",overwrite=TRUE)
+
+
+
+
+
+
