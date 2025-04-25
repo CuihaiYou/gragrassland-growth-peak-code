@@ -7,6 +7,8 @@ The scripts cover the following analyses:
 - **Partial correlation analysis** to examine relationships between key environmental variables.  
 - **Factorial experiments** using a **random forest model** to assess the influence of different environmental factors on grassland growth peaks.  
 
+if you have any questions please contact chyou@des.ecnu.edu.cn
+
 ## Contents
 - `partial_correlation.R` – Code for partial correlation analysis.  
 - `factorial_experiment_RF.R` – Implementation of factorial experiments using the random forest model.  
