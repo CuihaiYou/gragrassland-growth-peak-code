@@ -3,27 +3,26 @@
 # while controlling for temporal trends and other variables
 
 # Install required packages if needed
-# install.packages(c("rdacca.hp", "raster", "rgdal", "readxl", "ppcor"))
+# install.packages(c( "raster", "rgdal", "readxl", "ppcor"))
 
 # Load required libraries
-library(rdacca.hp)
 library(raster)
 library(rgdal)
 library(readxl)
 library(ppcor)
 
 # Set paths to input data
-ndvi_path <- "/home/you_ch/NDVI/max_grass_0.1"
-precipitation_path <- "/home/you_ch/ERA5/PPT/grass"
-temperature_path <- "/home/you_ch/ERA5/TA/grass"
-radiation_path <- "/home/you_ch/ERA5/Rad/grass"
-nitrogen_path <- "/home/you_ch/ERA5/N/grass"
-cropland_path <- "/home/you_ch/landuse/crop_0.1/grass"
-rangeland_path <- "/home/you_ch/landuse/range_0.1/grass"
-co2_excel_path <- "/home/you_ch/ERA5/CO2.xlsx"
+ndvi_path <- "/data/NDVI"
+precipitation_path <- "/data/PPT"
+temperature_path <- "/data/TA"
+radiation_path <- "/data/Rad"
+nitrogen_path <- "/data/N"
+cropland_path <- "/data/Crop"
+rangeland_path <- "/data/Range"
+co2_excel_path <- "/data/CO2/CO2.xlsx"
 
 # Output directory for results
-output_dir <- "/home/you_ch/contribution/pcor_crop_range"
+output_dir <- "data/output"
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
@@ -176,3 +175,4 @@ for (var in variables) {
 }
 
 print("Analysis complete! All results saved.")
+
