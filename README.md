@@ -14,7 +14,7 @@ if you have any questions please contact chyou@des.ecnu.edu.cn
 - `factorial_experiment_RF.R` – Implementation of factorial experiments using the random forest model.  
 
 ## data
-- the directory contains demo data of EAS regions
+- the directory contains demo data of EAS region
 
 ## Usage
 1. Clone the repository:  
