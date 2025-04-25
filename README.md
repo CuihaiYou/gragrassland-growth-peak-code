@@ -13,6 +13,9 @@ if you have any questions please contact chyou@des.ecnu.edu.cn
 - `partial_correlation.R` – Code for partial correlation analysis.  
 - `factorial_experiment_RF.R` – Implementation of factorial experiments using the random forest model.  
 
+## data
+- the directory contains demo data of EAS regions
+
 ## Usage
 1. Clone the repository:  
    ```bash
